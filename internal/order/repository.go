@@ -2,6 +2,7 @@ package order
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/labstack/gommon/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -9,12 +10,12 @@ import (
 
 type Repository interface {
 	Create(context.Context, *Order) (string, error)
-	Update(ctx context.Context, order *Order) (bool, error)
+	Update(ctx context.Context, order Order) (bool, error)
 	Delete(ctx context.Context, id string) (bool, error)
 	GetAll(ctx context.Context) ([]Order, error)
 	GetById(ctx context.Context, id string) (*Order, error)
 	GetByCustomerId(ctx context.Context, id string) ([]Order, error)
-	ChangeStatus(ctx context.Context, id, status string) (bool, error)
+	ChangeStatus(ctx context.Context, id string, status string) (bool, error)
 }
 
 type mongoRepository struct {
@@ -22,7 +23,7 @@ type mongoRepository struct {
 }
 
 func (m mongoRepository) GetByCustomerId(ctx context.Context, id string) ([]Order, error) {
-	cursor, err := m.collection.Find(ctx, log.JSON{"customer_id": id})
+	cursor, err := m.collection.Find(ctx, bson.M{"customer_id": id})
 	orders := make([]Order, 0)
 	if err = cursor.All(ctx, &orders); err != nil {
 		log.Fatal(err)
@@ -30,10 +31,12 @@ func (m mongoRepository) GetByCustomerId(ctx context.Context, id string) ([]Orde
 	return orders, err
 }
 
-func (m mongoRepository) ChangeStatus(ctx context.Context, id, status string) (bool, error) {
+func (m mongoRepository) ChangeStatus(ctx context.Context, id string, status string) (bool, error) {
 	filter := bson.M{"_id": id}
-	update := bson.M{"$set": bson.M{"status": status}}
-	_, err := m.collection.UpdateOne(ctx, filter, update)
+	update := bson.M{"$set": bson.M{
+		"status": &status,
+	}}
+	_, err := m.collection.UpdateMany(ctx, filter, update)
 	if err != nil {
 		return false, err
 	}
@@ -48,9 +51,13 @@ func (m mongoRepository) Delete(ctx context.Context, id string) (bool, error) {
 	return true, nil
 }
 
-func (m mongoRepository) Update(ctx context.Context, order *Order) (bool, error) {
+func (m mongoRepository) Update(ctx context.Context, order Order) (bool, error) {
 	filter := bson.M{"_id": order.Id}
-	update := bson.M{"$set": bson.M{"customer_id": order.CustomerId, "quantity": order.Quantity, "status": order.Status}}
+	update := bson.M{"$set": bson.M{
+		"customer_id": order.CustomerId,
+		"quantity":    order.Quantity,
+		"status":      order.Status,
+	}}
 	_, err := m.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return false, err
@@ -64,7 +71,7 @@ func (m mongoRepository) GetById(ctx context.Context, id string) (order *Order, 
 }
 
 func (m mongoRepository) GetAll(ctx context.Context) ([]Order, error) {
-	cursor, err := m.collection.Find(ctx, log.JSON{})
+	cursor, err := m.collection.Find(ctx, bson.M{})
 	orders := make([]Order, 0)
 	if err = cursor.All(ctx, &orders); err != nil {
 		log.Fatal(err)
@@ -73,6 +80,8 @@ func (m mongoRepository) GetAll(ctx context.Context) ([]Order, error) {
 }
 
 func (m mongoRepository) Create(ctx context.Context, order *Order) (string, error) {
+	order.Id = uuid.New().String()
+	order.Status = "Waiting"
 	_, err := m.collection.InsertOne(ctx, order)
 	return order.Id, err
 }

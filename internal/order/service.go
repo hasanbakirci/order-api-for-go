@@ -49,7 +49,7 @@ func (s service) Delete(ctx context.Context, id string) (status bool, err error)
 
 func (s service) Update(ctx context.Context, request UpdateOrderRequest) (status bool, err error) {
 	order := request.ToOrder()
-	status, err = s.repository.Update(ctx, order)
+	status, err = s.repository.Update(ctx, *order)
 	return
 }
 

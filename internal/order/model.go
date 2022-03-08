@@ -3,10 +3,10 @@ package order
 type (
 	Order struct {
 		Id         string `bson:"_id"`
-		CustomerId string `json:"customer_id"`
-		Quantity   int    `json:"quantity"`
+		CustomerId string `bson:"customer_id"`
+		Quantity   int    `bson:"quantity"`
 		//Price      float32   `json:"price"`
-		Status string `json:"status"`
+		Status string `bson:"status"`
 		//Address    Address   `json:"address"`
 		//Product    Product   `json:"product"`
 		//CreatedAt  time.Time `json:"CreatedAt"`

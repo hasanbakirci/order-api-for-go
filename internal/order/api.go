@@ -23,10 +23,10 @@ func RegisterHandlers(instance *echo.Echo, api Resource) {
 	instance.POST(fmt.Sprintf("%s", baseUrl), api.createOrder)
 	instance.GET(fmt.Sprintf(baseUrl), api.getallOrders)
 	instance.GET("api/order/:id", api.getbyid)
-	instance.PUT("api/order/", api.updateOrder)
+	instance.PUT("api/order", api.updateOrder)
 	instance.DELETE("api/order/:id", api.deleteOrder)
 	instance.GET("api/order/customer/:id", api.getbyCustomer)
-	instance.PUT("api/order/changestatus", api.changeStatus)
+	instance.PUT("api/order/status", api.changeStatus)
 }
 
 func (r *Resource) createOrder(c echo.Context) error {
@@ -93,6 +93,9 @@ func (r *Resource) getbyCustomer(c echo.Context) error {
 
 func (r *Resource) changeStatus(c echo.Context) error {
 	request := new(ChangeStatusRequest)
+	if err := c.Bind(request); err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+	}
 	result, err := r.service.ChangeStatus(c.Request().Context(), *request)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, "")
