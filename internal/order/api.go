@@ -38,7 +38,7 @@ func (r *Resource) createOrder(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusCreated, result)
 }
 
 func (r *Resource) getallOrders(c echo.Context) error {
@@ -53,10 +53,7 @@ func (r *Resource) getbyid(c echo.Context) error {
 	id := c.Param("id")
 	order, err := r.service.GetById(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
-	if order == nil {
-		return c.JSON(http.StatusNotFound, "")
+		return c.JSON(http.StatusNotFound, err.Error())
 	}
 	return c.JSON(http.StatusOK, order)
 }
@@ -76,17 +73,17 @@ func (r *Resource) updateOrder(c echo.Context) error {
 func (r *Resource) deleteOrder(c echo.Context) error {
 	id := c.Param("id")
 	status, err := r.service.Delete(c.Request().Context(), id)
-	if status != true {
-		return c.JSON(http.StatusNotFound, err)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, err.Error())
 	}
-	return c.JSON(http.StatusOK, true)
+	return c.JSON(http.StatusAccepted, status)
 }
 
 func (r *Resource) getbyCustomer(c echo.Context) error {
 	id := c.Param("id")
 	orders, err := r.service.GetByCustomerId(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, "")
+		return c.JSON(http.StatusNotFound, err.Error())
 	}
 	return c.JSON(http.StatusOK, orders)
 }
@@ -98,7 +95,7 @@ func (r *Resource) changeStatus(c echo.Context) error {
 	}
 	result, err := r.service.ChangeStatus(c.Request().Context(), *request)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, "")
+		return c.JSON(http.StatusNotFound, err.Error())
 	}
 	return c.JSON(http.StatusOK, result)
 }

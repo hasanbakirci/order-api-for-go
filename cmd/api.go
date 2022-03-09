@@ -30,8 +30,8 @@ func init() {
 
 	var port string
 	var cfgFile string
-	apiCmd.PersistentFlags().StringVarP(&port, "port", "p", "5000", "Restfull Service Port")
-	apiCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "config.dev.yaml", "config file (default is $HOME/.golang-api.yaml)")
+	apiCmd.PersistentFlags().StringVarP(&port, "port", "p", "1994", "Restfull Service Port")
+	apiCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "config.dev", "config file (default is $HOME/.golang-api.yaml)")
 
 	ApiConfig, err := config.GetAllValues("./config/", cfgFile)
 	if err != nil {
