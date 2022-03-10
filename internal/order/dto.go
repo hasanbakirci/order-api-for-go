@@ -3,32 +3,32 @@ package order
 import "time"
 
 type CreateOrderRequest struct {
-	CustomerId string               `json:"customer_id"`
-	Quantity   int                  `json:"quantity"`
-	Price      float32              `bson:"price"`
-	Address    CreateAddressRequest `bson:"address"`
-	Product    CreateProductRequest `bson:"product"`
+	CustomerId string               `json:"customer_id" validate:"required"`
+	Quantity   int                  `json:"quantity" validate:"required,gt=0,numeric"`
+	Price      float32              `bson:"price" validate:"required,gt=0,numeric"`
+	Address    CreateAddressRequest `bson:"address" validate:"required"`
+	Product    CreateProductRequest `bson:"product" validate:"required"`
 }
 type CreateAddressRequest struct {
-	AddressLine string `bson:"address_line"`
-	City        string `bson:"city"`
-	Country     string `bson:"country"`
-	CityCode    int    `bson:"city_code"`
+	AddressLine string `bson:"address_line" validate:"required"`
+	City        string `bson:"city" validate:"required"`
+	Country     string `bson:"country" validate:"required"`
+	CityCode    int    `bson:"city_code" validate:"required,gt=0,numeric"`
 }
 type CreateProductRequest struct {
-	Id       string `bson:"id"`
-	ImageUrl string `bson:"image_url"`
-	Name     string `bson:"name"`
+	Id       string `bson:"id" validate:"required"`
+	ImageUrl string `bson:"image_url" validate:"required"`
+	Name     string `bson:"name" validate:"required"`
 }
-
-func (c *CreateOrderRequest) ToOrder() *Order {
-	return &Order{
-		CustomerId: c.CustomerId,
-		Quantity:   c.Quantity,
-		Price:      c.Price,
-		Address:    Address(c.Address),
-		Product:    Product(c.Product),
-	}
+type UpdateOrderRequest struct {
+	Id         string `json:"id" validate:"required"`
+	CustomerId string `json:"customer_id" validate:"required"`
+	Quantity   int    `json:"quantity" validate:"required,gt=0,numeric"`
+	Status     string `json:"status" validate:"required"`
+}
+type ChangeStatusRequest struct {
+	Id     string `json:"id"`
+	Status string `json:"status" validate:"required"`
 }
 
 type OrderResponse struct {
@@ -54,6 +54,16 @@ type ProductResponse struct {
 	Name     string `json:"name"`
 }
 
+func (c *CreateOrderRequest) ToOrder() *Order {
+	return &Order{
+		CustomerId: c.CustomerId,
+		Quantity:   c.Quantity,
+		Price:      c.Price,
+		Address:    Address(c.Address),
+		Product:    Product(c.Product),
+	}
+}
+
 func (o Order) ToOrderResponse() *OrderResponse {
 	return &OrderResponse{
 		Id:         o.Id,
@@ -68,13 +78,6 @@ func (o Order) ToOrderResponse() *OrderResponse {
 	}
 }
 
-type UpdateOrderRequest struct {
-	Id         string `json:"id"`
-	CustomerId string `json:"customer_id"`
-	Quantity   int    `json:"quantity"`
-	Status     string `json:"status"`
-}
-
 func (u UpdateOrderRequest) ToOrder() *Order {
 	return &Order{
 		Id:         u.Id,
@@ -82,9 +85,4 @@ func (u UpdateOrderRequest) ToOrder() *Order {
 		Quantity:   u.Quantity,
 		Status:     u.Status,
 	}
-}
-
-type ChangeStatusRequest struct {
-	Id     string `json:"id"`
-	Status string `json:"status"`
 }

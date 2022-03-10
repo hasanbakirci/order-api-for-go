@@ -2,6 +2,7 @@ package order
 
 import (
 	"fmt"
+	"github.com/hasanbakirci/order-api-for-go/pkg/validationHelper"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -31,8 +32,11 @@ func RegisterHandlers(instance *echo.Echo, api Resource) {
 
 func (r *Resource) createOrder(c echo.Context) error {
 	request := new(CreateOrderRequest)
-	if err := c.Bind(request); err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
+	//if err := c.Bind(request); err != nil {
+	//	return c.JSON(http.StatusBadRequest, err.Error())
+	//}
+	if _, err := validationHelper.Validate(c, request); err != nil {
+		return c.JSON(http.StatusBadRequest, err)
 	}
 	result, err := r.service.Create(c.Request().Context(), *request)
 	if err != nil {
@@ -60,8 +64,11 @@ func (r *Resource) getbyid(c echo.Context) error {
 
 func (r *Resource) updateOrder(c echo.Context) error {
 	request := new(UpdateOrderRequest)
-	if err := c.Bind(request); err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
+	//if err := c.Bind(request); err != nil {
+	//	c.JSON(http.StatusBadRequest, err.Error())
+	//}
+	if _, err := validationHelper.Validate(c, request); err != nil {
+		return c.JSON(http.StatusBadRequest, err)
 	}
 	result, err := r.service.Update(c.Request().Context(), *request)
 	if err != nil {
@@ -90,8 +97,11 @@ func (r *Resource) getbyCustomer(c echo.Context) error {
 
 func (r *Resource) changeStatus(c echo.Context) error {
 	request := new(ChangeStatusRequest)
-	if err := c.Bind(request); err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
+	//if err := c.Bind(request); err != nil {
+	//	c.JSON(http.StatusBadRequest, err.Error())
+	//}
+	if _, err := validationHelper.Validate(c, request); err != nil {
+		return c.JSON(http.StatusBadRequest, err)
 	}
 	result, err := r.service.ChangeStatus(c.Request().Context(), *request)
 	if err != nil {
