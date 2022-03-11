@@ -9,6 +9,7 @@ import (
 	"github.com/hasanbakirci/order-api-for-go/internal/config"
 	"github.com/hasanbakirci/order-api-for-go/internal/order"
 	"github.com/hasanbakirci/order-api-for-go/pkg/echoExtensions"
+	"github.com/hasanbakirci/order-api-for-go/pkg/middleware"
 	"github.com/hasanbakirci/order-api-for-go/pkg/mongoHelper"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/cobra"
@@ -41,6 +42,8 @@ func init() {
 	apiCmd.Run = func(cmd *cobra.Command, args []string) {
 		//application bootstrapper
 		instance := echo.New()
+		//custom middleware
+		instance.Use(middleware.RecoverMiddlewareFunc)
 		db, err := mongoHelper.ConnectDb(ApiConfig.MongoSettings)
 		if err != nil {
 			fmt.Println("Db connection error")
