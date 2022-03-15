@@ -2,6 +2,7 @@ package order
 
 import (
 	"context"
+	"fmt"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,10 +17,21 @@ type Repository interface {
 	GetById(ctx context.Context, id string) (*Order, error)
 	GetByCustomerId(ctx context.Context, id string) ([]Order, error)
 	ChangeStatus(ctx context.Context, id string, status string) (bool, error)
+	DeleteCustomersOrder(ctx context.Context, id string) (bool, error)
 }
 
 type mongoRepository struct {
 	collection *mongo.Collection
+}
+
+func (m mongoRepository) DeleteCustomersOrder(ctx context.Context, id string) (bool, error) {
+	filter := bson.M{"customer_id": id}
+	deleteResult, err := m.collection.DeleteMany(ctx, filter)
+	if deleteResult.DeletedCount > 0 {
+		fmt.Printf("deleted orders for customerid:%s,count:%d", id, deleteResult.DeletedCount)
+		return true, nil
+	}
+	return false, err
 }
 
 func (m mongoRepository) GetByCustomerId(ctx context.Context, id string) ([]Order, error) {

@@ -15,10 +15,16 @@ type Service interface {
 	GetById(ctx context.Context, id string) (*OrderResponse, error)
 	GetByCustomerId(ctx context.Context, id string) ([]OrderResponse, error)
 	ChangeStatus(ctx context.Context, request ChangeStatusRequest) (bool, error)
+	DeleteCustomersOrder(ctx context.Context, id string) (bool, error)
 }
 
 type service struct {
 	repository Repository
+}
+
+func (s service) DeleteCustomersOrder(ctx context.Context, id string) (bool, error) {
+	result, err := s.repository.DeleteCustomersOrder(ctx, id)
+	return result, err
 }
 
 func (s service) GetByCustomerId(ctx context.Context, id string) ([]OrderResponse, error) {
