@@ -1,7 +1,7 @@
 package order
 
 import (
-	"fmt"
+	"github.com/google/uuid"
 	"github.com/hasanbakirci/order-api-for-go/pkg/validationHelper"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -16,18 +16,17 @@ func NewResource(s Service) Resource {
 }
 
 func RegisterHandlers(instance *echo.Echo, api Resource) {
-	baseUrl := "api/order"
 	instance.GET("/", func(c echo.Context) error {
 		c.JSON(http.StatusOK, "orders")
 		return nil
 	})
-	instance.POST(fmt.Sprintf("%s", baseUrl), api.createOrder)
-	instance.GET(fmt.Sprintf(baseUrl), api.getallOrders)
+	instance.POST("api/order", api.createOrder)
+	instance.GET("api/order", api.getallOrders)
 	instance.GET("api/order/:id", api.getbyid)
-	instance.PUT("api/order", api.updateOrder)
+	instance.PUT("api/order/:id", api.updateOrder)
 	instance.DELETE("api/order/:id", api.deleteOrder)
 	instance.GET("api/order/customer/:id", api.getbyCustomer)
-	instance.PUT("api/order/status", api.changeStatus)
+	instance.PUT("api/order/status/:id", api.changeStatus)
 }
 
 func (r *Resource) createOrder(c echo.Context) error {
@@ -54,7 +53,7 @@ func (r *Resource) getallOrders(c echo.Context) error {
 }
 
 func (r *Resource) getbyid(c echo.Context) error {
-	id := c.Param("id")
+	id, _ := uuid.Parse(c.Param("id"))
 	order, err := r.service.GetById(c.Request().Context(), id)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
@@ -63,6 +62,7 @@ func (r *Resource) getbyid(c echo.Context) error {
 }
 
 func (r *Resource) updateOrder(c echo.Context) error {
+	id, _ := uuid.Parse(c.Param("id"))
 	request := new(UpdateOrderRequest)
 	//if err := c.Bind(request); err != nil {
 	//	c.JSON(http.StatusBadRequest, err.Error())
@@ -70,24 +70,24 @@ func (r *Resource) updateOrder(c echo.Context) error {
 	if _, err := validationHelper.Validate(c, request); err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
-	result, err := r.service.Update(c.Request().Context(), *request)
-	if err != nil {
+	ok, err := r.service.Update(c.Request().Context(), id, *request)
+	if !ok {
 		c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, ok)
 }
 
 func (r *Resource) deleteOrder(c echo.Context) error {
-	id := c.Param("id")
-	status, err := r.service.Delete(c.Request().Context(), id)
-	if err != nil {
+	id, _ := uuid.Parse(c.Param("id"))
+	ok, err := r.service.Delete(c.Request().Context(), id)
+	if !ok {
 		return c.JSON(http.StatusNotFound, err.Error())
 	}
-	return c.JSON(http.StatusAccepted, status)
+	return c.JSON(http.StatusAccepted, ok)
 }
 
 func (r *Resource) getbyCustomer(c echo.Context) error {
-	id := c.Param("id")
+	id, _ := uuid.Parse(c.Param("id"))
 	orders, err := r.service.GetByCustomerId(c.Request().Context(), id)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
@@ -96,6 +96,7 @@ func (r *Resource) getbyCustomer(c echo.Context) error {
 }
 
 func (r *Resource) changeStatus(c echo.Context) error {
+	id, _ := uuid.Parse(c.Param("id"))
 	request := new(ChangeStatusRequest)
 	//if err := c.Bind(request); err != nil {
 	//	c.JSON(http.StatusBadRequest, err.Error())
@@ -103,9 +104,9 @@ func (r *Resource) changeStatus(c echo.Context) error {
 	if _, err := validationHelper.Validate(c, request); err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
-	result, err := r.service.ChangeStatus(c.Request().Context(), *request)
-	if err != nil {
+	ok, err := r.service.ChangeStatus(c.Request().Context(), id, *request)
+	if !ok {
 		return c.JSON(http.StatusNotFound, err.Error())
 	}
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, ok)
 }

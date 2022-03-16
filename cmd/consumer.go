@@ -7,6 +7,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/hasanbakirci/order-api-for-go/internal/config"
 	"github.com/hasanbakirci/order-api-for-go/internal/order"
 	"github.com/hasanbakirci/order-api-for-go/pkg/mongoHelper"
@@ -93,7 +94,8 @@ func init() {
 		go func() {
 			for d := range msgs {
 				fmt.Printf("Recived Message: %s\n", d.Body)
-				consumer.service.DeleteCustomersOrder(context.TODO(), string(d.Body))
+				deletedId, _ := uuid.Parse(string(d.Body))
+				consumer.service.DeleteCustomersOrder(context.TODO(), deletedId)
 			}
 		}()
 

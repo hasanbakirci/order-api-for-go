@@ -1,9 +1,12 @@
 package order
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type CreateOrderRequest struct {
-	CustomerId string               `json:"customer_id" validate:"required"`
+	CustomerId uuid.UUID            `json:"customer_id" validate:"required"`
 	Quantity   int                  `json:"quantity" validate:"required,gt=0,numeric"`
 	Price      float32              `bson:"price" validate:"required,gt=0,numeric"`
 	Address    CreateAddressRequest `bson:"address" validate:"required"`
@@ -16,18 +19,18 @@ type CreateAddressRequest struct {
 	CityCode    int    `bson:"city_code" validate:"required,gt=0,numeric"`
 }
 type CreateProductRequest struct {
-	Id       string `bson:"id" validate:"required"`
-	ImageUrl string `bson:"image_url" validate:"required"`
-	Name     string `bson:"name" validate:"required"`
+	Id       uuid.UUID `bson:"id" validate:"required"`
+	ImageUrl string    `bson:"image_url" validate:"required"`
+	Name     string    `bson:"name" validate:"required"`
 }
 type UpdateOrderRequest struct {
-	Id         string `json:"id" validate:"required"`
-	CustomerId string `json:"customer_id" validate:"required"`
-	Quantity   int    `json:"quantity" validate:"required,gt=0,numeric"`
-	Status     string `json:"status" validate:"required"`
+	//Id         uuid.UUID `json:"id" validate:"required"`
+	CustomerId uuid.UUID `json:"customer_id" validate:"required"`
+	Quantity   int       `json:"quantity" validate:"required,gt=0,numeric"`
+	Status     string    `json:"status" validate:"required"`
 }
 type ChangeStatusRequest struct {
-	Id     string `json:"id"`
+	//Id     uuid.UUID `json:"id"`
 	Status string `json:"status" validate:"required"`
 }
 
@@ -56,11 +59,15 @@ type ProductResponse struct {
 
 func (c *CreateOrderRequest) ToOrder() *Order {
 	return &Order{
-		CustomerId: c.CustomerId,
+		CustomerId: c.CustomerId.String(),
 		Quantity:   c.Quantity,
 		Price:      c.Price,
 		Address:    Address(c.Address),
-		Product:    Product(c.Product),
+		Product: Product{
+			Id:       c.Product.Id.String(),
+			ImageUrl: c.Product.ImageUrl,
+			Name:     c.Product.Name,
+		},
 	}
 }
 
@@ -80,8 +87,8 @@ func (o Order) ToOrderResponse() *OrderResponse {
 
 func (u UpdateOrderRequest) ToOrder() *Order {
 	return &Order{
-		Id:         u.Id,
-		CustomerId: u.CustomerId,
+		//Id:         u.Id.String(),
+		CustomerId: u.CustomerId.String(),
 		Quantity:   u.Quantity,
 		Status:     u.Status,
 	}

@@ -2,6 +2,7 @@ package order
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/hasanbakirci/order-api-for-go/internal/clients"
 	"github.com/pkg/errors"
 )
@@ -9,25 +10,25 @@ import (
 // Servcice
 type Service interface {
 	Create(context.Context, CreateOrderRequest) (string, error)
-	Update(ctx context.Context, request UpdateOrderRequest) (bool, error)
-	Delete(ctx context.Context, id string) (bool, error)
+	Update(ctx context.Context, id uuid.UUID, request UpdateOrderRequest) (bool, error)
+	Delete(ctx context.Context, id uuid.UUID) (bool, error)
 	GetAll(ctx context.Context) ([]OrderResponse, error)
-	GetById(ctx context.Context, id string) (*OrderResponse, error)
-	GetByCustomerId(ctx context.Context, id string) ([]OrderResponse, error)
-	ChangeStatus(ctx context.Context, request ChangeStatusRequest) (bool, error)
-	DeleteCustomersOrder(ctx context.Context, id string) (bool, error)
+	GetById(ctx context.Context, id uuid.UUID) (*OrderResponse, error)
+	GetByCustomerId(ctx context.Context, id uuid.UUID) ([]OrderResponse, error)
+	ChangeStatus(ctx context.Context, id uuid.UUID, request ChangeStatusRequest) (bool, error)
+	DeleteCustomersOrder(ctx context.Context, id uuid.UUID) (bool, error)
 }
 
 type service struct {
 	repository Repository
 }
 
-func (s service) DeleteCustomersOrder(ctx context.Context, id string) (bool, error) {
+func (s service) DeleteCustomersOrder(ctx context.Context, id uuid.UUID) (bool, error) {
 	result, err := s.repository.DeleteCustomersOrder(ctx, id)
 	return result, err
 }
 
-func (s service) GetByCustomerId(ctx context.Context, id string) ([]OrderResponse, error) {
+func (s service) GetByCustomerId(ctx context.Context, id uuid.UUID) ([]OrderResponse, error) {
 	orders, err := s.repository.GetByCustomerId(ctx, id)
 	orderResponse := make([]OrderResponse, 0)
 	for i := 0; i < len(orders); i++ {
@@ -41,8 +42,11 @@ func (s service) GetByCustomerId(ctx context.Context, id string) ([]OrderRespons
 
 }
 
-func (s service) ChangeStatus(ctx context.Context, request ChangeStatusRequest) (bool, error) {
-	result, err := s.repository.ChangeStatus(ctx, request.Id, request.Status)
+func (s service) ChangeStatus(ctx context.Context, id uuid.UUID, request ChangeStatusRequest) (bool, error) {
+	if _, e := s.GetById(ctx, id); e != nil {
+		return false, e
+	}
+	result, err := s.repository.ChangeStatus(ctx, id, request.Status)
 	if err != nil {
 		err = errors.Wrap(err, "Service error")
 		return false, err
@@ -50,7 +54,10 @@ func (s service) ChangeStatus(ctx context.Context, request ChangeStatusRequest) 
 	return result, nil
 }
 
-func (s service) Delete(ctx context.Context, id string) (bool, error) {
+func (s service) Delete(ctx context.Context, id uuid.UUID) (bool, error) {
+	if _, e := s.GetById(ctx, id); e != nil {
+		return false, e
+	}
 	result, err := s.repository.Delete(ctx, id)
 	if result {
 		return result, nil
@@ -58,9 +65,12 @@ func (s service) Delete(ctx context.Context, id string) (bool, error) {
 	return result, err
 }
 
-func (s service) Update(ctx context.Context, request UpdateOrderRequest) (bool, error) {
+func (s service) Update(ctx context.Context, id uuid.UUID, request UpdateOrderRequest) (bool, error) {
+	if _, e := s.GetById(ctx, id); e != nil {
+		return false, e
+	}
 	order := request.ToOrder()
-	result, err := s.repository.Update(ctx, *order)
+	result, err := s.repository.Update(ctx, id, *order)
 	if err != nil {
 		err = errors.Wrap(err, "Service error")
 		return false, err
@@ -68,7 +78,7 @@ func (s service) Update(ctx context.Context, request UpdateOrderRequest) (bool, 
 	return result, nil
 }
 
-func (s service) GetById(ctx context.Context, id string) (*OrderResponse, error) {
+func (s service) GetById(ctx context.Context, id uuid.UUID) (*OrderResponse, error) {
 	order, err := s.repository.GetById(ctx, id)
 	if err != nil {
 		err = errors.Wrap(err, "Service")
@@ -94,7 +104,7 @@ func (s service) GetAll(ctx context.Context) ([]OrderResponse, error) {
 
 //Create Order Method
 func (s service) Create(ctx context.Context, request CreateOrderRequest) (string, error) {
-	status, e := clients.ValidateCustomer(request.CustomerId)
+	status, e := clients.ValidateCustomer(request.CustomerId.String())
 	if status == false {
 		return "", e
 	}
