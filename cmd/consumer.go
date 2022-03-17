@@ -11,8 +11,8 @@ import (
 	"github.com/hasanbakirci/order-api-for-go/internal/config"
 	"github.com/hasanbakirci/order-api-for-go/internal/order"
 	"github.com/hasanbakirci/order-api-for-go/pkg/mongoHelper"
+	"github.com/hasanbakirci/order-api-for-go/pkg/rabbitmqclient"
 	"github.com/spf13/cobra"
-	"github.com/streadway/amqp"
 )
 
 type Consumer struct {
@@ -23,19 +23,10 @@ func NewConsumer(s order.Service) Consumer {
 	return Consumer{service: s}
 }
 
-//func (c *Consumer) DeleteCustomers(id string) (result bool,err error){
-//	result, err = c.service.DeleteCustomersOrder(context.TODO(),id)
-//	return
-//}
-
 // consumerCmd represents the consumer command
 var consumerCmd = &cobra.Command{
 	Use:   "consumer",
 	Short: "This project is consume the deleted customer",
-
-	//Run: func(cmd *cobra.Command, args []string) {
-	//	fmt.Println("consumer called")
-	//},
 }
 
 func init() {
@@ -55,28 +46,33 @@ func init() {
 		if err != nil {
 			fmt.Println("Db connection error")
 		}
+		client, cErr := rabbitmqclient.NewRabbitMqClient(ApiConfig.RabbitMQSettings)
+		if cErr != nil {
+			fmt.Println("RabbitMQ connection error")
+		}
 
 		repository := order.NewRepository(db)
 		service := order.NewService(repository)
 		consumer := NewConsumer(service)
 
-		fmt.Println("Consumer Application")
-		conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+		defer client.Connection.Close()
+		defer client.Channel.Close()
+
+		q, err := client.Channel.QueueDeclare(
+			"Deleted-Customer-Queue",
+			false,
+			false,
+			false,
+			false,
+			nil,
+		)
 		if err != nil {
 			fmt.Println(err)
 			panic(err)
 		}
-		defer conn.Close()
-		fmt.Println("Succesfuly Connected to our RabbitMQ instance")
+		fmt.Println(q, " created")
 
-		ch, err := conn.Channel()
-		if err != nil {
-			fmt.Println(err)
-			panic(err)
-		}
-		defer ch.Close()
-
-		msgs, err := ch.Consume(
+		msgs, err := client.Channel.Consume(
 			"Deleted-Customer-Queue",
 			"",
 			true,
@@ -93,14 +89,11 @@ func init() {
 		forever := make(chan bool)
 		go func() {
 			for d := range msgs {
-				fmt.Printf("Recived Message: %s\n", d.Body)
 				deletedId, _ := uuid.Parse(string(d.Body))
-				consumer.service.DeleteCustomersOrder(context.TODO(), deletedId)
+				ok, _ := consumer.service.DeleteCustomersOrder(context.Background(), deletedId)
+				fmt.Printf("Recived Message: %s || status : %t \n", d.Body, ok)
 			}
 		}()
-
-		fmt.Println("Succesfully connected to our RabbitMq instance")
-		fmt.Println("[*] - waiting go messages")
 		<-forever
 	}
 
