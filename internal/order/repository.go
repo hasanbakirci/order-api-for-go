@@ -3,29 +3,30 @@ package order
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
+	"github.com/satori/go.uuid"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
 
 type Repository interface {
-	Create(context.Context, *Order) (string, error)
-	Update(ctx context.Context, id uuid.UUID, order Order) (bool, error)
-	Delete(ctx context.Context, id uuid.UUID) (bool, error)
+	Create(context.Context, *Order) (primitive.Binary, error)
+	Update(ctx context.Context, id primitive.Binary, order Order) (bool, error)
+	Delete(ctx context.Context, id primitive.Binary) (bool, error)
 	GetAll(ctx context.Context) ([]Order, error)
-	GetById(ctx context.Context, id uuid.UUID) (*Order, error)
-	GetByCustomerId(ctx context.Context, id uuid.UUID) ([]Order, error)
-	ChangeStatus(ctx context.Context, id uuid.UUID, status string) (bool, error)
-	DeleteCustomersOrder(ctx context.Context, id uuid.UUID) (bool, error)
+	GetById(ctx context.Context, id primitive.Binary) (*Order, error)
+	GetByCustomerId(ctx context.Context, id primitive.Binary) ([]Order, error)
+	ChangeStatus(ctx context.Context, id primitive.Binary, status string) (bool, error)
+	DeleteCustomersOrder(ctx context.Context, id primitive.Binary) (bool, error)
 }
 
 type mongoRepository struct {
 	collection *mongo.Collection
 }
 
-func (m mongoRepository) DeleteCustomersOrder(ctx context.Context, id uuid.UUID) (bool, error) {
-	filter := bson.M{"customer_id": id.String()}
+func (m mongoRepository) DeleteCustomersOrder(ctx context.Context, id primitive.Binary) (bool, error) {
+	filter := bson.M{"customer_id": id}
 	deleteResult, err := m.collection.DeleteMany(ctx, filter)
 	if deleteResult.DeletedCount > 0 {
 		fmt.Printf("deleted orders for customerid:%s,count:%d", id, deleteResult.DeletedCount)
@@ -34,8 +35,8 @@ func (m mongoRepository) DeleteCustomersOrder(ctx context.Context, id uuid.UUID)
 	return false, err
 }
 
-func (m mongoRepository) GetByCustomerId(ctx context.Context, id uuid.UUID) ([]Order, error) {
-	cursor, err := m.collection.Find(ctx, bson.M{"customer_id": id.String()})
+func (m mongoRepository) GetByCustomerId(ctx context.Context, id primitive.Binary) ([]Order, error) {
+	cursor, err := m.collection.Find(ctx, bson.M{"customer_id": id})
 	orders := make([]Order, 0)
 	if err = cursor.All(ctx, &orders); err != nil {
 		return nil, err
@@ -43,9 +44,9 @@ func (m mongoRepository) GetByCustomerId(ctx context.Context, id uuid.UUID) ([]O
 	return orders, nil
 }
 
-func (m mongoRepository) ChangeStatus(ctx context.Context, id uuid.UUID, status string) (bool, error) {
+func (m mongoRepository) ChangeStatus(ctx context.Context, id primitive.Binary, status string) (bool, error) {
 
-	filter := bson.M{"_id": id.String()}
+	filter := bson.M{"_id": id}
 	update := bson.M{"$set": bson.M{
 		"status":    &status,
 		"updatedAt": time.Now(),
@@ -57,16 +58,16 @@ func (m mongoRepository) ChangeStatus(ctx context.Context, id uuid.UUID, status 
 	return true, nil
 }
 
-func (m mongoRepository) Delete(ctx context.Context, id uuid.UUID) (bool, error) {
-	deleteResult, err := m.collection.DeleteOne(ctx, bson.M{"_id": id.String()})
+func (m mongoRepository) Delete(ctx context.Context, id primitive.Binary) (bool, error) {
+	deleteResult, err := m.collection.DeleteOne(ctx, bson.M{"_id": id})
 	if deleteResult.DeletedCount < 1 {
 		return false, err
 	}
 	return true, nil
 }
 
-func (m mongoRepository) Update(ctx context.Context, id uuid.UUID, order Order) (bool, error) {
-	filter := bson.M{"_id": id.String()}
+func (m mongoRepository) Update(ctx context.Context, id primitive.Binary, order Order) (bool, error) {
+	filter := bson.M{"_id": id}
 	update := bson.M{"$set": bson.M{
 		"customer_id": order.CustomerId,
 		"quantity":    order.Quantity,
@@ -80,9 +81,9 @@ func (m mongoRepository) Update(ctx context.Context, id uuid.UUID, order Order) 
 	return true, nil
 }
 
-func (m mongoRepository) GetById(ctx context.Context, id uuid.UUID) (*Order, error) {
+func (m mongoRepository) GetById(ctx context.Context, id primitive.Binary) (*Order, error) {
 	order := new(Order)
-	if err := m.collection.FindOne(ctx, bson.M{"_id": id.String()}).Decode(&order); err != nil {
+	if err := m.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&order); err != nil {
 		return nil, err
 	}
 	return order, nil
@@ -97,13 +98,16 @@ func (m mongoRepository) GetAll(ctx context.Context) ([]Order, error) {
 	return orders, nil
 }
 
-func (m mongoRepository) Create(ctx context.Context, order *Order) (string, error) {
-	order.Id = uuid.New().String()
+func (m mongoRepository) Create(ctx context.Context, order *Order) (primitive.Binary, error) {
+	order.Id = primitive.Binary{
+		Subtype: 3,
+		Data:    uuid.NewV3(uuid.NewV4(), "order").Bytes(),
+	}
 	order.Status = "Waiting"
 	order.CreatedAt = time.Now()
 	result, err := m.collection.InsertOne(ctx, order)
 	if result.InsertedID == nil {
-		return "", err
+		return primitive.Binary{}, err
 	}
 	return order.Id, err
 }

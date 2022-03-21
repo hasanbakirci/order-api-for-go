@@ -3,15 +3,15 @@ package listener
 import (
 	"fmt"
 	"github.com/hasanbakirci/order-api-for-go/internal/config"
-	"github.com/hasanbakirci/order-api-for-go/internal/consumer"
 	"github.com/hasanbakirci/order-api-for-go/internal/order"
+	"github.com/hasanbakirci/order-api-for-go/internal/queue"
 	"github.com/hasanbakirci/order-api-for-go/pkg/mongoHelper"
 	"github.com/hasanbakirci/order-api-for-go/pkg/rabbitmqclient"
 )
 
 type listener struct {
 	rabbitClient   rabbitmqclient.Client
-	deleteConsumer consumer.DeleteConsumer
+	deleteConsumer queue.DeleteConsumer
 }
 
 func NewListener(settings config.Configuration) listener {
@@ -27,7 +27,7 @@ func NewListener(settings config.Configuration) listener {
 
 	repository := order.NewRepository(db)
 	service := order.NewService(repository)
-	consumer := consumer.NewDeleteConsumer(service, client)
+	consumer := queue.NewDeleteConsumer(service, client)
 
 	return listener{
 		rabbitClient:   *client,

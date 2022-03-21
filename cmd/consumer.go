@@ -10,9 +10,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// consumerCmd represents the consumer command
+// consumerCmd represents the queue command
 var consumerCmd = &cobra.Command{
-	Use:   "consumer",
+	Use:   "queue",
 	Short: "This project is consume the deleted customer",
 }
 

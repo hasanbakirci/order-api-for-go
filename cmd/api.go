@@ -44,6 +44,7 @@ func init() {
 		instance := echo.New()
 		//custom middleware
 		instance.Use(middleware.RecoverMiddlewareFunc)
+
 		db, err := mongoHelper.ConnectDb(ApiConfig.MongoSettings)
 		if err != nil {
 			fmt.Println("Db connection error")
@@ -52,8 +53,8 @@ func init() {
 		//Register handlers -> resource -> service -> repository -> mongodb
 		repository := order.NewRepository(db)
 		service := order.NewService(repository)
-		resource := order.NewResource(service)
-		order.RegisterHandlers(instance, resource)
+		controller := order.NewController(service)
+		order.RegisterHandlers(instance, controller)
 
 		fmt.Println("Api starting")
 		if err := instance.Start(fmt.Sprintf(":%s", port)); err != nil {

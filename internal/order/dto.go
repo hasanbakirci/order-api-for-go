@@ -1,12 +1,13 @@
 package order
 
 import (
-	"github.com/google/uuid"
+	uuid "github.com/satori/go.uuid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
 type CreateOrderRequest struct {
-	CustomerId uuid.UUID            `json:"customer_id" validate:"required"`
+	CustomerId string               `json:"customer_id" validate:"required"`
 	Quantity   int                  `json:"quantity" validate:"required,gt=0,numeric"`
 	Price      float32              `bson:"price" validate:"required,gt=0,numeric"`
 	Address    CreateAddressRequest `bson:"address" validate:"required"`
@@ -19,31 +20,29 @@ type CreateAddressRequest struct {
 	CityCode    int    `bson:"city_code" validate:"required,gt=0,numeric"`
 }
 type CreateProductRequest struct {
-	Id       uuid.UUID `bson:"id" validate:"required"`
-	ImageUrl string    `bson:"image_url" validate:"required"`
-	Name     string    `bson:"name" validate:"required"`
+	Id       string `bson:"id" validate:"required"`
+	ImageUrl string `bson:"image_url" validate:"required"`
+	Name     string `bson:"name" validate:"required"`
 }
 type UpdateOrderRequest struct {
-	//Id         uuid.UUID `json:"id" validate:"required"`
-	CustomerId uuid.UUID `json:"customer_id" validate:"required"`
-	Quantity   int       `json:"quantity" validate:"required,gt=0,numeric"`
-	Status     string    `json:"status" validate:"required"`
+	CustomerId string `json:"customer_id" validate:"required"`
+	Quantity   int    `json:"quantity" validate:"required,gt=0,numeric"`
+	Status     string `json:"status" validate:"required"`
 }
 type ChangeStatusRequest struct {
-	//Id     uuid.UUID `json:"id"`
 	Status string `json:"status" validate:"required"`
 }
 
 type OrderResponse struct {
-	Id         string          `json:"id"`
-	CustomerId string          `json:"customer_id"`
-	Quantity   int             `json:"quantity"`
-	Price      float32         `json:"price"`
-	Status     string          `json:"status"`
-	Address    AddressResponse `json:"address"`
-	Product    ProductResponse `json:"product"`
-	CreatedAt  time.Time       `json:"createdAt"`
-	UpdatedAt  time.Time       `json:"updatedAt"`
+	Id         primitive.Binary `json:"id"`
+	CustomerId primitive.Binary `json:"customer_id"`
+	Quantity   int              `json:"quantity"`
+	Price      float32          `json:"price"`
+	Status     string           `json:"status"`
+	Address    AddressResponse  `json:"address"`
+	Product    ProductResponse  `json:"product"`
+	CreatedAt  time.Time        `json:"createdAt"`
+	UpdatedAt  time.Time        `json:"updatedAt"`
 }
 type AddressResponse struct {
 	AddressLine string `json:"address_line"`
@@ -52,19 +51,21 @@ type AddressResponse struct {
 	CityCode    int    `json:"city_code"`
 }
 type ProductResponse struct {
-	Id       string `json:"id"`
-	ImageUrl string `json:"image_url"`
-	Name     string `json:"name"`
+	Id       primitive.Binary `json:"id"`
+	ImageUrl string           `json:"image_url"`
+	Name     string           `json:"name"`
 }
 
 func (c *CreateOrderRequest) ToOrder() *Order {
+	cid, _ := uuid.FromString(c.CustomerId)
+	pid, _ := uuid.FromString(c.Product.Id)
 	return &Order{
-		CustomerId: c.CustomerId.String(),
+		CustomerId: primitive.Binary{3, cid.Bytes()},
 		Quantity:   c.Quantity,
 		Price:      c.Price,
 		Address:    Address(c.Address),
 		Product: Product{
-			Id:       c.Product.Id.String(),
+			Id:       primitive.Binary{3, pid.Bytes()},
 			ImageUrl: c.Product.ImageUrl,
 			Name:     c.Product.Name,
 		},
@@ -86,9 +87,9 @@ func (o Order) ToOrderResponse() *OrderResponse {
 }
 
 func (u UpdateOrderRequest) ToOrder() *Order {
+	cid, _ := uuid.FromString(u.CustomerId)
 	return &Order{
-		//Id:         u.Id.String(),
-		CustomerId: u.CustomerId.String(),
+		CustomerId: primitive.Binary{3, cid.Bytes()},
 		Quantity:   u.Quantity,
 		Status:     u.Status,
 	}
