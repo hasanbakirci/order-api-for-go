@@ -3,6 +3,7 @@ package listener
 import (
 	"fmt"
 	"github.com/hasanbakirci/order-api-for-go/internal/config"
+	"github.com/hasanbakirci/order-api-for-go/internal/logger"
 	"github.com/hasanbakirci/order-api-for-go/internal/order"
 	"github.com/hasanbakirci/order-api-for-go/internal/queue"
 	"github.com/hasanbakirci/order-api-for-go/pkg/mongoHelper"
@@ -12,6 +13,7 @@ import (
 type listener struct {
 	rabbitClient   rabbitmqclient.Client
 	deleteConsumer queue.DeleteConsumer
+	loggerConsumer queue.LoggerConsumer
 }
 
 func NewListener(settings config.Configuration) listener {
@@ -24,16 +26,23 @@ func NewListener(settings config.Configuration) listener {
 	if cErr != nil {
 		fmt.Println("RabbitMQ connection error")
 	}
-
+	producer := queue.NewProducer(client)
 	repository := order.NewRepository(db)
 	service := order.NewService(repository)
-	consumer := queue.NewDeleteConsumer(service, client)
+	deleteConsumer := queue.NewDeleteConsumer(service, client, &producer)
+
+	logRepository := logger.NewRepository(db)
+	logService := logger.NewLogService(logRepository)
+	logConsumer := queue.NewLoggerConsumer(logService, client)
 
 	return listener{
 		rabbitClient:   *client,
-		deleteConsumer: consumer,
+		deleteConsumer: deleteConsumer,
+		loggerConsumer: logConsumer,
 	}
 }
 func (l listener) Start() {
-	l.deleteConsumer.Consume()
+	go l.loggerConsumer.Consume()
+	go l.deleteConsumer.Consume()
+
 }

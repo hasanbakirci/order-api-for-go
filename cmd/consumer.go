@@ -12,7 +12,7 @@ import (
 
 // consumerCmd represents the queue command
 var consumerCmd = &cobra.Command{
-	Use:   "queue",
+	Use:   "consumer",
 	Short: "This project is consume the deleted customer",
 }
 
