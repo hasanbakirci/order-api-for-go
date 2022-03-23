@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/hasanbakirci/order-api-for-go/internal/config"
 	"github.com/hasanbakirci/order-api-for-go/internal/order"
+	"github.com/hasanbakirci/order-api-for-go/internal/queue"
 	"github.com/hasanbakirci/order-api-for-go/pkg/echoExtensions"
 	"github.com/hasanbakirci/order-api-for-go/pkg/middleware"
 	"github.com/hasanbakirci/order-api-for-go/pkg/mongoHelper"
@@ -49,6 +50,9 @@ func init() {
 		if err != nil {
 			fmt.Println("Db connection error")
 		}
+
+		client := queue.NewRabbitClient(*ApiConfig)
+		client.DeclareExchangeQueueBindings()
 
 		//Register handlers -> resource -> service -> repository -> mongodb
 		repository := order.NewRepository(db)
