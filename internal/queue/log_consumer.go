@@ -19,8 +19,8 @@ func NewLoggerConsumer(s logger.Service, c *rabbitmqclient.Client) LoggerConsume
 	}
 }
 func (l LoggerConsumer) Consume() {
-	messages, err := l.client.Channel.Consume(
-		"Order-Log-Queue",
+	messages, err := l.client.CreateChannel().Consume(
+		"Log-Order-Queue",
 		"",
 		true,
 		false,
@@ -32,8 +32,8 @@ func (l LoggerConsumer) Consume() {
 		panic(err)
 	}
 	for m := range messages {
-		ok, err := l.service.Create(context.Background(), string(m.Body))
-		fmt.Printf("status: %t || err: %s ", ok, err)
+		ok, err := l.service.Create(context.Background(), m.Body)
+		fmt.Printf("\nlog consumer -> status: %t || err: %s ", ok, err)
 	}
 
 }

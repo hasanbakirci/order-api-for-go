@@ -13,16 +13,35 @@ var (
 // config.yaml ile burdakileri map etmek için viper kullanılıyor.
 type (
 	Configuration struct {
-		MongoSettings    MongoSettings
-		RabbitMQSettings RabbitMQSettings
+		MongoSettings MongoSettings
+		RabbitConfig  RabbitConfig
+		QueuesConfig  QueuesConfig
 	}
 	MongoSettings struct {
 		DatabaseName string
 		Uri          string
 		Timeout      int
 	}
-	RabbitMQSettings struct {
-		Url string
+	RabbitConfig struct {
+		Host           string
+		Port           int
+		VirtualHost    string
+		ConnectionName string
+		Username       string
+		Password       string
+	}
+	QueueConfig struct {
+		Exchange     string
+		ExchangeType string
+		RoutingKey   string
+		Queue        string
+	}
+	OrderQueueConfig struct {
+		LogCreated   QueueConfig
+		OrderDeleted QueueConfig
+	}
+	QueuesConfig struct {
+		Order OrderQueueConfig
 	}
 
 	configReader struct {

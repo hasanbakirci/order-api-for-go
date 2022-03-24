@@ -22,14 +22,12 @@ func NewListener(settings config.Configuration) listener {
 	if err != nil {
 		fmt.Println("Db connection error")
 	}
-	client, cErr := rabbitmqclient.NewRabbitMqClient(settings.RabbitMQSettings)
-	if cErr != nil {
-		fmt.Println("RabbitMQ connection error")
-	}
-	producer := queue.NewProducer(client)
+	client := rabbitmqclient.NewRabbitClient(settings)
+	client.DeclareExchangeQueueBindings()
+
 	repository := order.NewRepository(db)
-	service := order.NewService(repository)
-	deleteConsumer := queue.NewDeleteConsumer(service, client, &producer)
+	service := order.NewService(repository, client)
+	deleteConsumer := queue.NewDeleteConsumer(service, client)
 
 	logRepository := logger.NewRepository(db)
 	logService := logger.NewLogService(logRepository)

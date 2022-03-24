@@ -3,6 +3,7 @@ package order
 import (
 	"context"
 	"github.com/hasanbakirci/order-api-for-go/internal/clients"
+	rabbit "github.com/hasanbakirci/order-api-for-go/pkg/rabbitmqclient"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -20,7 +21,8 @@ type Service interface {
 }
 
 type service struct {
-	repository Repository
+	repository   Repository
+	rabbitClient *rabbit.Client
 }
 
 func (s service) DeleteCustomersOrder(ctx context.Context, id primitive.Binary) (bool, error) {
@@ -55,12 +57,13 @@ func (s service) ChangeStatus(ctx context.Context, id primitive.Binary, request 
 }
 
 func (s service) Delete(ctx context.Context, id primitive.Binary) (bool, error) {
-	_, e := s.GetById(ctx, id)
+	order, e := s.GetById(ctx, id)
 	if e != nil {
 		return false, e
 	}
 	result, err := s.repository.Delete(ctx, id)
 	if result {
+		s.rabbitClient.PublishMessage("Log-Order-Exchange", "Log-Order-Queue", *order)
 		return result, nil
 	}
 	return result, err
@@ -119,11 +122,12 @@ func (s service) Create(ctx context.Context, request CreateOrderRequest) (primit
 }
 
 //ServiceFactory
-func NewService(r Repository) Service {
+func NewService(r Repository, c *rabbit.Client) Service {
 	if r == nil {
 		return nil
 	}
 	return &service{
-		repository: r,
+		repository:   r,
+		rabbitClient: c,
 	}
 }

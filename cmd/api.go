@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"github.com/hasanbakirci/order-api-for-go/internal/config"
 	"github.com/hasanbakirci/order-api-for-go/internal/order"
-	"github.com/hasanbakirci/order-api-for-go/internal/queue"
 	"github.com/hasanbakirci/order-api-for-go/pkg/echoExtensions"
 	"github.com/hasanbakirci/order-api-for-go/pkg/middleware"
 	"github.com/hasanbakirci/order-api-for-go/pkg/mongoHelper"
+	"github.com/hasanbakirci/order-api-for-go/pkg/rabbitmqclient"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/cobra"
 	"time"
@@ -41,9 +41,8 @@ func init() {
 	}
 
 	apiCmd.Run = func(cmd *cobra.Command, args []string) {
-		//application bootstrapper
 		instance := echo.New()
-		//custom middleware
+
 		instance.Use(middleware.RecoverMiddlewareFunc)
 
 		db, err := mongoHelper.ConnectDb(ApiConfig.MongoSettings)
@@ -51,12 +50,11 @@ func init() {
 			fmt.Println("Db connection error")
 		}
 
-		client := queue.NewRabbitClient(*ApiConfig)
+		var client = rabbitmqclient.NewRabbitClient(*ApiConfig)
 		client.DeclareExchangeQueueBindings()
 
-		//Register handlers -> resource -> service -> repository -> mongodb
 		repository := order.NewRepository(db)
-		service := order.NewService(repository)
+		service := order.NewService(repository, client)
 		controller := order.NewController(service)
 		order.RegisterHandlers(instance, controller)
 

@@ -1,6 +1,7 @@
-package queue
+package rabbitmqclient
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/hasanbakirci/order-api-for-go/internal/config"
 	"github.com/labstack/gommon/log"
@@ -34,15 +35,32 @@ func (c *Client) CreateChannel() *amqp.Channel {
 	return channel
 }
 
+func (c *Client) PublishMessage(exchangeName string, routingKey string, message interface{}) {
+	body, _ := json.Marshal(message)
+	err := c.CreateChannel().Publish(
+		exchangeName,
+		routingKey,
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        body,
+		},
+	)
+	if err != nil {
+		fmt.Println("producer: failed to publish message")
+	}
+}
+
 func (c *Client) DeclareExchangeQueueBindings() {
 	channel := c.CreateChannel()
-	declareExchange(channel, c.config.QueuesConfig.Deneme.DenemeCreated)
-	declareQueue(channel, c.config.QueuesConfig.Deneme.DenemeCreated)
-	bindQueue(channel, c.config.QueuesConfig.Deneme.DenemeCreated)
+	declareExchange(channel, c.config.QueuesConfig.Order.LogCreated)
+	declareQueue(channel, c.config.QueuesConfig.Order.LogCreated)
+	bindQueue(channel, c.config.QueuesConfig.Order.LogCreated)
 
-	declareExchange(channel, c.config.QueuesConfig.Deneme.DenemeDeleted)
-	declareQueue(channel, c.config.QueuesConfig.Deneme.DenemeDeleted)
-	bindQueue(channel, c.config.QueuesConfig.Deneme.DenemeDeleted)
+	declareExchange(channel, c.config.QueuesConfig.Order.OrderDeleted)
+	declareQueue(channel, c.config.QueuesConfig.Order.OrderDeleted)
+	bindQueue(channel, c.config.QueuesConfig.Order.OrderDeleted)
 }
 
 func getConnectionUrl(config config.RabbitConfig) string {

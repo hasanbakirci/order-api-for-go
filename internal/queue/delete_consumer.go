@@ -7,25 +7,24 @@ import (
 	"github.com/hasanbakirci/order-api-for-go/pkg/rabbitmqclient"
 	"github.com/satori/go.uuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"strings"
 	//rabbit "github.com/streadway/amqp"
 )
 
 type DeleteConsumer struct {
-	service  order.Service
-	client   *rabbitmqclient.Client
-	producer *Producer
+	service order.Service
+	client  *rabbitmqclient.Client
 }
 
-func NewDeleteConsumer(s order.Service, c *rabbitmqclient.Client, p *Producer) DeleteConsumer {
+func NewDeleteConsumer(s order.Service, c *rabbitmqclient.Client) DeleteConsumer {
 	return DeleteConsumer{
-		service:  s,
-		client:   c,
-		producer: p,
+		service: s,
+		client:  c,
 	}
 }
 
 func (d DeleteConsumer) Consume() {
-	messages, err := d.client.Channel.Consume(
+	messages, err := d.client.CreateChannel().Consume(
 		"Deleted-Customer-Queue",
 		"",
 		true,
@@ -38,13 +37,19 @@ func (d DeleteConsumer) Consume() {
 		panic(err)
 	}
 	for m := range messages {
-		deletedId, _ := uuid.FromString(string(m.Body))
+		deletedId, _ := uuid.FromString(stringFormat(string(m.Body)))
 		orders, _ := d.service.GetByCustomerId(context.Background(), primitive.Binary{3, deletedId.Bytes()})
 		for i := 0; i < len(orders); i++ {
 			d.service.Delete(context.Background(), orders[i].Id)
-			d.producer.QueueDeclare()
-			d.producer.Publish(orders[i])
 		}
-		fmt.Printf("Recived Message: %s", m.Body)
+		fmt.Printf("delete consumer -> customer id: %s , order lenght: %d", m.Body, len(orders))
 	}
+}
+
+func stringFormat(str string) string {
+	if strings.Contains(str, `"`) {
+		newStr := strings.Split(str, `"`)
+		return newStr[1]
+	}
+	return str
 }
