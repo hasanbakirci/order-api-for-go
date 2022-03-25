@@ -1,8 +1,6 @@
 mongoSettings:
   databaseName: "tesodev-go"
   uri: "mongodb://admin:admin@127.0.0.1:27017"
-rabbitMQSettings:
-  url: "amqp://guest:guest@localhost:5672/"
 rabbitConfig:
   host: "127.0.0.1"
   port: 5672
@@ -15,7 +13,7 @@ queuesConfig:
     logCreated:
       exchange: "Log-Order-Exchange"
       exchangeType: "fanout"
-      routingKey: "Log-Order-Queue"
+      routingKey: ""
       queue: "Log-Order-Queue"
     orderDeleted:
       exchange: "Customer-Exchange"

@@ -32,7 +32,7 @@ func init() {
 		forever := make(chan bool)
 
 		l := listener.NewListener(*ApiConfig)
-		go l.Start()
+		l.Start()
 
 		<-forever
 

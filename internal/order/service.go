@@ -63,7 +63,7 @@ func (s service) Delete(ctx context.Context, id primitive.Binary) (bool, error) 
 	}
 	result, err := s.repository.Delete(ctx, id)
 	if result {
-		s.rabbitClient.PublishMessage("Log-Order-Exchange", "Log-Order-Queue", *order)
+		s.rabbitClient.PublishMessage("Log-Order-Exchange", "", *order)
 		return result, nil
 	}
 	return result, err
