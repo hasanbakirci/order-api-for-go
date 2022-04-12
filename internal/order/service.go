@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/hasanbakirci/order-api-for-go/internal/clients"
 	rabbit "github.com/hasanbakirci/order-api-for-go/pkg/rabbitmqclient"
+	"github.com/hasanbakirci/order-api-for-go/pkg/response"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -70,13 +71,9 @@ func (s service) Delete(ctx context.Context, id primitive.Binary) (bool, error) 
 }
 
 func (s service) Update(ctx context.Context, id primitive.Binary, request UpdateOrderRequest) (bool, error) {
-	if _, e := s.GetById(ctx, id); e != nil {
-		return false, e
-	}
 	order := request.ToOrder()
 	result, err := s.repository.Update(ctx, id, *order)
 	if err != nil {
-		err = errors.Wrap(err, "Service error")
 		return false, err
 	}
 	return result, nil
@@ -108,9 +105,10 @@ func (s service) GetAll(ctx context.Context) ([]OrderResponse, error) {
 
 //Create Order Method
 func (s service) Create(ctx context.Context, request CreateOrderRequest) (primitive.Binary, error) {
-	status, e := clients.ValidateCustomer(request.CustomerId)
+	status, _ := clients.ValidateCustomer(request.CustomerId)
 	if status == false {
-		return primitive.Binary{}, e
+		//return primitive.Binary{}, e
+		panic(response.CustomPanic(400, 4005, "customer client error"))
 	}
 	order := *request.ToOrder()
 	id, err := s.repository.Create(ctx, &order)

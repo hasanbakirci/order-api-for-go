@@ -34,15 +34,15 @@ type ChangeStatusRequest struct {
 }
 
 type OrderResponse struct {
-	Id         primitive.Binary `json:"id"`
-	CustomerId primitive.Binary `json:"customer_id"`
-	Quantity   int              `json:"quantity"`
-	Price      float32          `json:"price"`
-	Status     string           `json:"status"`
-	Address    AddressResponse  `json:"address"`
-	Product    ProductResponse  `json:"product"`
-	CreatedAt  time.Time        `json:"createdAt"`
-	UpdatedAt  time.Time        `json:"updatedAt"`
+	Id         string          `json:"id"`
+	CustomerId string          `json:"customer_id"`
+	Quantity   int             `json:"quantity"`
+	Price      float32         `json:"price"`
+	Status     string          `json:"status"`
+	Address    AddressResponse `json:"address"`
+	Product    ProductResponse `json:"product"`
+	CreatedAt  time.Time       `json:"createdAt"`
+	UpdatedAt  time.Time       `json:"updatedAt"`
 }
 type AddressResponse struct {
 	AddressLine string `json:"address_line"`
@@ -51,9 +51,9 @@ type AddressResponse struct {
 	CityCode    int    `json:"city_code"`
 }
 type ProductResponse struct {
-	Id       primitive.Binary `json:"id"`
-	ImageUrl string           `json:"image_url"`
-	Name     string           `json:"name"`
+	Id       string `json:"id"`
+	ImageUrl string `json:"image_url"`
+	Name     string `json:"name"`
 }
 
 func (c *CreateOrderRequest) ToOrder() *Order {
@@ -73,16 +73,23 @@ func (c *CreateOrderRequest) ToOrder() *Order {
 }
 
 func (o Order) ToOrderResponse() *OrderResponse {
+	id, _ := uuid.FromBytes(o.Id.Data)
+	cid, _ := uuid.FromBytes(o.CustomerId.Data)
+	pid, _ := uuid.FromBytes(o.Product.Id.Data)
 	return &OrderResponse{
-		Id:         o.Id,
-		CustomerId: o.CustomerId,
+		Id:         id.String(),
+		CustomerId: cid.String(),
 		Quantity:   o.Quantity,
 		Price:      o.Price,
 		Status:     o.Status,
 		Address:    AddressResponse(o.Address),
-		Product:    ProductResponse(o.Product),
-		CreatedAt:  o.CreatedAt,
-		UpdatedAt:  o.UpdatedAt,
+		Product: ProductResponse{
+			Id:       pid.String(),
+			ImageUrl: o.Product.ImageUrl,
+			Name:     o.Product.Name,
+		},
+		CreatedAt: o.CreatedAt,
+		UpdatedAt: o.UpdatedAt,
 	}
 }
 

@@ -1,8 +1,8 @@
 package middleware
 
 import (
+	"github.com/hasanbakirci/order-api-for-go/pkg/response"
 	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 func RecoverMiddlewareFunc(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
@@ -10,8 +10,15 @@ func RecoverMiddlewareFunc(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 		defer func() {
 			//str := recover()
 			//c.JSON(http.StatusInternalServerError, str)
-			if err := recover(); err != nil {
-				c.JSON(http.StatusInternalServerError, err)
+			if r := recover(); r != nil {
+				switch t := r.(type) {
+				case response.ErrorDetails:
+					response.ErrorResponse(c, t.StatusCode, t.ErrorCode, t.Message)
+				default:
+					response.ErrorResponse(c, 500, 5000, r)
+				}
+				//c.JSON(http.StatusInternalServerError, err)
+				//response.ErrorResponse(c, 500, 5000, r)
 			}
 		}()
 		return handlerFunc(c)

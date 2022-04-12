@@ -40,7 +40,8 @@ func (d DeleteConsumer) Consume() {
 		deletedId, _ := uuid.FromString(stringFormat(string(m.Body)))
 		orders, _ := d.service.GetByCustomerId(context.Background(), primitive.Binary{3, deletedId.Bytes()})
 		for i := 0; i < len(orders); i++ {
-			d.service.Delete(context.Background(), orders[i].Id)
+			oid, _ := uuid.FromString(orders[i].Id)
+			d.service.Delete(context.Background(), primitive.Binary{3, oid.Bytes()})
 		}
 		fmt.Printf("delete consumer -> customer id: %s , order lenght: %d", m.Body, len(orders))
 	}
