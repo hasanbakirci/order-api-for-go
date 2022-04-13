@@ -6,12 +6,13 @@ import (
 	rabbit "github.com/hasanbakirci/order-api-for-go/pkg/rabbitmqclient"
 	"github.com/hasanbakirci/order-api-for-go/pkg/response"
 	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Servcice
 type Service interface {
-	Create(context.Context, CreateOrderRequest) (primitive.Binary, error)
+	Create(context.Context, CreateOrderRequest) (string, error)
 	Update(ctx context.Context, id primitive.Binary, request UpdateOrderRequest) (bool, error)
 	Delete(ctx context.Context, id primitive.Binary) (bool, error)
 	GetAll(ctx context.Context) ([]OrderResponse, error)
@@ -104,7 +105,7 @@ func (s service) GetAll(ctx context.Context) ([]OrderResponse, error) {
 }
 
 //Create Order Method
-func (s service) Create(ctx context.Context, request CreateOrderRequest) (primitive.Binary, error) {
+func (s service) Create(ctx context.Context, request CreateOrderRequest) (string, error) {
 	status, _ := clients.ValidateCustomer(request.CustomerId)
 	if status == false {
 		//return primitive.Binary{}, e
@@ -113,10 +114,11 @@ func (s service) Create(ctx context.Context, request CreateOrderRequest) (primit
 	order := *request.ToOrder()
 	id, err := s.repository.Create(ctx, &order)
 	if err != nil {
-		return primitive.Binary{}, errors.Wrap(err, "Service: Failed to create order")
+		return "", errors.Wrap(err, "Service: Failed to create order")
 		//wrap iç katmandaki hatayı kaybetmeden yukarı çıkarabilir.
 	}
-	return id, nil
+	result, _ := uuid.FromBytes(id.Data)
+	return result.String(), nil
 }
 
 //ServiceFactory

@@ -105,6 +105,7 @@ func (m mongoRepository) Create(ctx context.Context, order *Order) (primitive.Bi
 	}
 	order.Status = "Waiting"
 	order.CreatedAt = time.Now()
+	order.UpdatedAt = time.Now()
 	result, err := m.collection.InsertOne(ctx, order)
 	if result.InsertedID == nil {
 		return primitive.Binary{}, err

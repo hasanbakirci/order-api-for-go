@@ -1,0 +1,260 @@
+basePath: /api
+definitions:
+  order.ChangeStatusRequest:
+    properties:
+      status:
+        type: string
+    required:
+    - status
+    type: object
+  order.CreateAddressRequest:
+    properties:
+      addressLine:
+        type: string
+      city:
+        type: string
+      cityCode:
+        type: integer
+      country:
+        type: string
+    required:
+    - addressLine
+    - city
+    - cityCode
+    - country
+    type: object
+  order.CreateOrderRequest:
+    properties:
+      address:
+        $ref: '#/definitions/order.CreateAddressRequest'
+      customer_id:
+        type: string
+      price:
+        type: number
+      product:
+        $ref: '#/definitions/order.CreateProductRequest'
+      quantity:
+        type: integer
+    required:
+    - address
+    - customer_id
+    - price
+    - product
+    - quantity
+    type: object
+  order.CreateProductRequest:
+    properties:
+      id:
+        type: string
+      imageUrl:
+        type: string
+      name:
+        type: string
+    required:
+    - id
+    - imageUrl
+    - name
+    type: object
+  order.UpdateOrderRequest:
+    properties:
+      customer_id:
+        type: string
+      quantity:
+        type: integer
+      status:
+        type: string
+    required:
+    - customer_id
+    - quantity
+    - status
+    type: object
+host: localhost:1994
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server celler server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger Order API
+  version: "1.0"
+paths:
+  /order:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+        "401":
+          description: unauthorized
+        "404":
+          description: not found
+        "500":
+          description: server error
+      summary: Show an orders
+      tags:
+      - orders
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Order Data
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/order.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "500":
+          description: server error
+      summary: Create order
+      tags:
+      - orders
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Order id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Order Data
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/order.UpdateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "500":
+          description: server error
+      summary: Update order
+      tags:
+      - orders
+  /order/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Order id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "500":
+          description: server error
+      summary: Delete order
+      tags:
+      - orders
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Order id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "500":
+          description: server error
+      summary: Show an order
+      tags:
+      - orders
+  /order/customer/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Customer id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+        "401":
+          description: unauthorized
+        "404":
+          description: not found
+        "500":
+          description: server error
+      summary: Show orders for Customer id
+      tags:
+      - orders
+  /order/status/{id}:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Order id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Order Data
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/order.ChangeStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: success
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "500":
+          description: server error
+      summary: Change status for order
+      tags:
+      - orders
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

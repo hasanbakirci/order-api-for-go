@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// swagger:model CreateOrderRequest
 type CreateOrderRequest struct {
 	CustomerId string               `json:"customer_id" validate:"required"`
 	Quantity   int                  `json:"quantity" validate:"required,gt=0,numeric"`
@@ -13,26 +14,35 @@ type CreateOrderRequest struct {
 	Address    CreateAddressRequest `bson:"address" validate:"required"`
 	Product    CreateProductRequest `bson:"product" validate:"required"`
 }
+
+// swagger:model CreateAddressRequest
 type CreateAddressRequest struct {
 	AddressLine string `bson:"address_line" validate:"required"`
 	City        string `bson:"city" validate:"required"`
 	Country     string `bson:"country" validate:"required"`
 	CityCode    int    `bson:"city_code" validate:"required,gt=0,numeric"`
 }
+
+// swagger:model CreateProductRequest
 type CreateProductRequest struct {
 	Id       string `bson:"id" validate:"required"`
 	ImageUrl string `bson:"image_url" validate:"required"`
 	Name     string `bson:"name" validate:"required"`
 }
+
+// swagger:model UpdateOrderRequest
 type UpdateOrderRequest struct {
 	CustomerId string `json:"customer_id" validate:"required"`
 	Quantity   int    `json:"quantity" validate:"required,gt=0,numeric"`
 	Status     string `json:"status" validate:"required"`
 }
+
+// swagger:model ChangeStatusRequest
 type ChangeStatusRequest struct {
 	Status string `json:"status" validate:"required"`
 }
 
+// swagger:model OrderResponse
 type OrderResponse struct {
 	Id         string          `json:"id"`
 	CustomerId string          `json:"customer_id"`
@@ -44,12 +54,16 @@ type OrderResponse struct {
 	CreatedAt  time.Time       `json:"createdAt"`
 	UpdatedAt  time.Time       `json:"updatedAt"`
 }
+
+// swagger:model AddressResponse
 type AddressResponse struct {
 	AddressLine string `json:"address_line"`
 	City        string `json:"city"`
 	Country     string `json:"country"`
 	CityCode    int    `json:"city_code"`
 }
+
+// swagger:model ProductResponse
 type ProductResponse struct {
 	Id       string `json:"id"`
 	ImageUrl string `json:"image_url"`
