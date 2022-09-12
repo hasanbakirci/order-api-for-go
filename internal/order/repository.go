@@ -29,7 +29,7 @@ func (m mongoRepository) DeleteCustomersOrder(ctx context.Context, id primitive.
 	filter := bson.M{"customer_id": id}
 	deleteResult, err := m.collection.DeleteMany(ctx, filter)
 	if deleteResult.DeletedCount > 0 {
-		fmt.Printf("deleted orders for customerid:%s,count:%d", id, deleteResult.DeletedCount)
+		fmt.Printf("deleted orders for customerid:%d,count:%d", id, deleteResult.DeletedCount)
 		return true, nil
 	}
 	return false, err

@@ -12,6 +12,7 @@ import (
 	"github.com/hasanbakirci/order-api-for-go/pkg/middleware"
 	"github.com/hasanbakirci/order-api-for-go/pkg/mongoHelper"
 	"github.com/hasanbakirci/order-api-for-go/pkg/rabbitmqclient"
+	"github.com/hasanbakirci/order-api-for-go/pkg/redisClient"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/cobra"
 	"time"
@@ -43,13 +44,16 @@ func init() {
 	apiCmd.Run = func(cmd *cobra.Command, args []string) {
 		instance := echo.New()
 
-		instance.Use(middleware.RecoverMiddlewareFunc)
+		//Redis
+		redisClient := redisClient.NewRedisClient("localhost:6379")
 
+		instance.Use(middleware.RecoverMiddlewareFunc, middleware.LoggerMiddlewareFunc(redisClient))
+		// Mongo
 		db, err := mongoHelper.ConnectDb(ApiConfig.MongoSettings)
 		if err != nil {
 			fmt.Println("Db connection error")
 		}
-
+		// RabbitMQ
 		var client = rabbitmqclient.NewRabbitClient(*ApiConfig)
 		client.DeclareExchangeQueueBindings()
 
